@@ -25,14 +25,22 @@
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
         <link rel="stylesheet" type="text/css" href="css/index.css" />
-        <title>Hello World</title>
+        <title>AllJoyn TV Control</title>
     </head>
     <body>
         <div class="app">
-            <h1>Apache Cordova</h1>
-            <div id="deviceready" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">Device is Ready</p>
+            <div class="status">
+                <h1>ALlJoyn TV Control</h1>
+                <div id="status"></div>
+            </div>
+            <div class="controls">
+                <button id="volumeup" class="control">+</button>
+                <button id="volumedown" class="control">-</button>
+                <button id="mute" class="control">mute</button>
+                <br/>
+                <button id="test" class="control">test</button>
+            </div>
+            <div class="footer">
             </div>
         </div>
         <script type="text/javascript" src="cordova.js"></script>
