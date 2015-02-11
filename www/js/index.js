@@ -36,6 +36,12 @@ var app = {
         button = document.getElementById('mute');
         button.addEventListener('click', this.onMutePressed, false);
 
+        button = document.getElementById('channelup');
+        button.addEventListener('click', this.onChannelUpPressed, false);
+
+        button = document.getElementById('channeldown');
+        button.addEventListener('click', this.onChannelDownPressed, false);
+
         button = document.getElementById('test');
         button.addEventListener('click', this.onTestPressed, false);
 
@@ -132,6 +138,16 @@ var app = {
         app.displayStatus('Joined TV Session: ' + tvSession.sessionId);
 
         // Add some functions for clear code later on
+        app.tvSession.channelUp = function() {
+            var channelUpIndexList = [2, 0, 4, 6];
+            app.tvSession.callMethod(app.getSuccessFor('channelUp'), app.getFailureFor('channelUp'), app.tvSession.sessionHost, null, channelUpIndexList, "", []);
+        };
+
+        app.tvSession.channelDown = function() {
+            var channelDownIndexList = [2, 0, 4, 2];
+            app.tvSession.callMethod(app.getSuccessFor('channelDown'), app.getFailureFor('channelDown'), app.tvSession.sessionHost, null, channelDownIndexList, "", []);
+        };
+
         app.tvSession.volumeUp = function() {
             var adjustVolumeIndexList = [2, 0, 3, 0]; // Proxy object List, First Object, 4th Interface, first member
             app.tvSession.callMethod(app.getSuccessFor('volumeUp'), app.getFailureFor('volumeUp'), app.tvSession.sessionHost, null, adjustVolumeIndexList, 'n', [1], null);
@@ -176,6 +192,10 @@ var app = {
             app.tvSession.getProperty('com.lg.Control.TV', 'SupportedInputSources', successCallback, errorCallback);
         };
 
+        app.tvSession.getChannelID = function(successCallback, errorCallback) {
+            app.tvSession.getProperty('com.lg.Control.TV', 'ChannelID', successCallback, errorCallback);
+        };
+
         // Setup listeners for signals
         var volumeChangedSignalIndexList = [2, 0, 3, 2];
         app.bus.addListener(volumeChangedSignalIndexList, 'n', app.onVolumeChanged);
@@ -186,12 +206,16 @@ var app = {
         var inputSourceChangedIndexList = [2, 0, 4, 4];
         app.bus.addListener(inputSourceChangedIndexList, 'q', app.onInputSourceChanged);
 
+        var channelNumberChangedIndexList = [2, 0, 4, 1];
+        app.bus.addListener(channelNumberChangedIndexList, '(sqss)', app.onChannelNumberChanged);
+
         var controls = document.querySelector('.controls');
         controls.setAttribute('style', 'display:block;');
 
         var onGetSupportedInputSources = function(args) {
             app.inputSources = [];
             var inputSources = args[0];
+            app.resetInputControls();
             for (var source in inputSources) {
                 var sourceIndex = inputSources[source][0];
                 var sourceName = inputSources[source][2];
@@ -202,6 +226,13 @@ var app = {
 
         };
         app.tvSession.getSupportedInputSources(onGetSupportedInputSources, app.getFailureFor('getSupportedInputSources'));
+    },
+    resetInputControls: function() {
+        var inputControls = document.getElementById('inputcontrols');
+        inputControls.innerHTML = '';
+        var inputHeader =  document.createElement('h2');
+        inputHeader.textContent = "input";
+        inputControls.appendChild(inputHeader);
     },
     addInputControl: function(inputIndex, inputName) {
         var inputControls = document.getElementById('inputcontrols');
@@ -219,7 +250,6 @@ var app = {
         inputControls.appendChild(inputControl);
     },
     updateSelectedInput: function(inputIndex) {
-        console.log('Looking for selected');
         var selectedControl = document.querySelector('.control.selected');
         if (selectedControl) {
             selectedControl.className = 'control';
@@ -229,6 +259,21 @@ var app = {
         if (inputControl) {
             inputControl.className = 'control selected';
         }
+    },
+    onChannelNumberChanged: function(args) {
+        //Unfortunately this doesn't give us meaningful data
+        // So ask for channel id
+        app.tvSession.getChannelID(app.receiveChannelID, app.getFailureFor('getChannelID'));
+    },
+    receiveChannelID: function(args){
+        var channelID = args[0];
+        var channelRe = /(\d+)_(\d+)(.*)/;
+        if (channelRe.test(channelID)) {
+            var matches = channelID.match(channelRe);
+            channelID = matches[1] + '-' + matches[2];
+        }
+        var channelStatus = document.getElementById('channelstatus');
+        channelstatus.textContent = 'CH: ' + channelID;
     },
     setVolumeStatus: function(volumeStatusContent) {
         var volumeStatus = document.getElementById('volumestatus');
@@ -241,10 +286,8 @@ var app = {
         }
         app.displayStatus('MuteChanged: ' + muted);
         if (muted) {
-            console.log("Muted!");
             app.setVolumeStatus('Muted');
         } else {
-            console.log("Not muted!");
             app.tvSession.getVolume(function(args) {
                 app.onVolumeChanged(args[0]);
             }, app.getFailureFor('getVolume'));
@@ -276,9 +319,19 @@ var app = {
             app.tvSession.setMute(true);
         }
     },
+    onChannelUpPressed: function() {
+        if (app.tvSession) {
+            app.tvSession.channelUp();
+        }
+    },
+    onChannelDownPressed: function() {
+        if (app.tvSession) {
+            app.tvSession.channelDown();
+        }
+    },
     onTestPressed: function() {
         if (app.tvSession) {
-            app.tvSession.getProperty('com.lg.Control.Mouse', 'MousePosition', app.getSuccessFor('getMousePosition'), app.getFailureFor('getMousePosition'));
+            app.tvSession.getProperty('com.lg.Control.TV', 'ChannelID', app.getSuccessFor('channleid'), app.getFailureFor('ChannelID'));
         }
     },
     getSuccessFor: function(successType) {
