@@ -29,18 +29,23 @@
     </head>
     <body>
         <div class="app">
-            <div class="status">
+            <header>
                 <h1>ALlJoyn TV Control</h1>
                 <div id="status"></div>
-            </div>
+            </header>
             <div class="controls">
-                <button id="volumeup" class="control">+</button>
-                <button id="volumedown" class="control">-</button>
-                <button id="mute" class="control">mute</button>
-                <br/>
-                <button id="test" class="control">test</button>
-            </div>
-            <div class="footer">
+                <div id="inputcontrols" class="controlgroup">
+                    <h2>Input</h2>
+                </div>
+                <div class="controlgroup other">
+                    <div id="test" class="control">Test</div>
+                </div>
+                <div class="controlgroup">
+                    <h2 id="volumestatus">Vol: 00</h2>
+                    <div id="volumeup" class="control">Vol +</div>
+                    <div id="volumedown" class="control">Vol -</div>
+                    <div id="mute" class="control">mute</div>
+                </div>
             </div>
         </div>
         <script type="text/javascript" src="cordova.js"></script>

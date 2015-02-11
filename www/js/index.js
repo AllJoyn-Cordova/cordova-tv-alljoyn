@@ -116,7 +116,7 @@ var app = {
     },
     onRegiteredObjects: function() {
         app.displayStatus('Looking for TV...');
-        app.bus.addInterfacesListener(['org.alljoyn.Control.Volume'], app.onFoundTV);
+        app.bus.addInterfacesListener(['org.alljoyn.Control.Volume', 'com.lg.Control.TV'], app.onFoundTV);
     },
     onFoundTV: function(tvInfo) {
         app.displayStatus('Found TV: ' + tvInfo.name + ' @ ' + tvInfo.port);
@@ -168,6 +168,10 @@ var app = {
             app.tvSession.getProperty('org.alljoyn.Control.Volume', 'VolumeRange', successCallback, errorCallback);
         };
 
+        app.tvSession.setInputSource = function(inputSourceIndex) {
+            app.tvSession.setProperty('com.lg.Control.TV', 'InputSource', ['q', inputSourceIndex], app.getSuccessFor('setInputSource'), app.getFailureFor('setInputSource'));
+        };
+
         app.tvSession.getSupportedInputSources = function(successCallback, errorCallback) {
             app.tvSession.getProperty('com.lg.Control.TV', 'SupportedInputSources', successCallback, errorCallback);
         };
@@ -193,20 +197,67 @@ var app = {
                 var sourceName = inputSources[source][2];
                 app.inputSources[sourceIndex] = sourceName;
                 console.log(inputSources[source][0] + ' ' + inputSources[source][2]);
+                app.addInputControl(sourceIndex, sourceName);
             }
 
         };
         app.tvSession.getSupportedInputSources(onGetSupportedInputSources, app.getFailureFor('getSupportedInputSources'));
     },
-    onMuteChanged: function(muted) {
+    addInputControl: function(inputIndex, inputName) {
+        var inputControls = document.getElementById('inputcontrols');
+
+        var inputControl = document.createElement('div');
+        inputControl.className = 'control';
+        inputControl.id = 'input' + inputIndex;
+        var inputControlContent = document.createTextNode(inputName);
+        inputControl.appendChild(inputControlContent);
+
+        inputControl.addEventListener('click', function() {
+            app.tvSession.setInputSource(inputIndex);
+        }, false);
+
+        inputControls.appendChild(inputControl);
+    },
+    updateSelectedInput: function(inputIndex) {
+        console.log('Looking for selected');
+        var selectedControl = document.querySelector('.control.selected');
+        if (selectedControl) {
+            selectedControl.className = 'control';
+        }
+
+        var inputControl = document.getElementById('input' + inputIndex);
+        if (inputControl) {
+            inputControl.className = 'control selected';
+        }
+    },
+    setVolumeStatus: function(volumeStatusContent) {
+        var volumeStatus = document.getElementById('volumestatus');
+        volumeStatus.textContent = volumeStatusContent;
+    },
+    onMuteChanged: function(mutedArgs) {
+        var muted = false;
+        if (mutedArgs) {
+            muted = mutedArgs[0];
+        }
         app.displayStatus('MuteChanged: ' + muted);
+        if (muted) {
+            console.log("Muted!");
+            app.setVolumeStatus('Muted');
+        } else {
+            console.log("Not muted!");
+            app.tvSession.getVolume(function(args) {
+                app.onVolumeChanged(args[0]);
+            }, app.getFailureFor('getVolume'));
+        }
     },
     onVolumeChanged: function(volume) {
         app.displayStatus('VolumeChanged: ' + volume);
+        app.setVolumeStatus('Vol: ' + volume);
     },
     onInputSourceChanged: function(inputSource) {
         app.displayStatus('InputSourceChanged: ' + inputSource);
         if (app.inputSources) {
+            app.updateSelectedInput(inputSource);
             app.displayStatus('InputSourceChanged: ' + app.inputSources[inputSource]);
         }
     },
@@ -227,13 +278,7 @@ var app = {
     },
     onTestPressed: function() {
         if (app.tvSession) {
-            if (app.inputSources) {
-                var getRandomInt = function(min, max) {
-                    return Math.floor(Math.random() * (max - min)) + min;
-                };
-                var randomInput = getRandomInt(0, app.inputSources.length);
-                app.tvSession.setProperty('com.lg.Control.TV', 'InputSource', ['q', randomInput]);
-            }
+            app.tvSession.getProperty('com.lg.Control.Mouse', 'MousePosition', app.getSuccessFor('getMousePosition'), app.getFailureFor('getMousePosition'));
         }
     },
     getSuccessFor: function(successType) {

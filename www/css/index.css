@@ -53,7 +53,39 @@ body {
 }
 
 .controls {
-    display:none;
+    display:block;
+    width:100%;
+    text-align: center;
+}
+
+.controlgroup {
+    width:33%;
+    float:left;
+    background-color:orange;
+}
+
+.other {
+    background-color:grey;
+}
+
+.left {
+    float:left;
+}
+
+.right {
+    float:right;
+}
+
+.control {
+    clear:both;
+    margin:1px;
+    padding:0.5em;
+    width:available;
+    background-color:yellow;
+}
+
+.selected {
+    background-color:green;
 }
 
 @keyframes fade {
