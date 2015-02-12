@@ -7,6 +7,14 @@ This app is in development. Currently being developed to work against an AllJoyn
 
 The app requires an AllJoyn router to be on the local network. The app is very basic currently and just tries to find the first device advertising the Volume interface. It then provides basic buttons to adjust the volume and reports related signals
 
+## To Run
+```sh
+$ git clone https://github.com/AllJoyn-Cordova/cordova-tv-alljoyn.git
+$ cd cordova-tv-alljoyn
+$ cordova plugin add org.allseen.alljoyn
+$ cordova platform add ios
+$ cordova run ios
+```
 
 ## Next Steps
 - Error checking/reporting
