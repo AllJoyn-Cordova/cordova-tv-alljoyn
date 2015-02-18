@@ -42,9 +42,6 @@ var app = {
         button = document.getElementById('channeldown');
         button.addEventListener('click', this.onChannelDownPressed, false);
 
-        button = document.getElementById('test');
-        button.addEventListener('click', this.onTestPressed, false);
-
     },
     // deviceready Event Handler
     //
@@ -184,6 +181,10 @@ var app = {
             app.tvSession.getProperty('org.alljoyn.Control.Volume', 'VolumeRange', successCallback, errorCallback);
         };
 
+        app.tvSession.getInputSource = function(successCallback, errorCallback) {
+            app.tvSession.getProperty('com.lg.Control.TV', 'InputSource', successCallback, errorCallback);
+        };
+
         app.tvSession.setInputSource = function(inputSourceIndex) {
             app.tvSession.setProperty('com.lg.Control.TV', 'InputSource', ['q', inputSourceIndex], app.getSuccessFor('setInputSource'), app.getFailureFor('setInputSource'));
         };
@@ -224,6 +225,8 @@ var app = {
                 app.addInputControl(sourceIndex, sourceName);
             }
 
+            // Once we get all the sources. Query the current input source to display the selected one
+            app.tvSession.getInputSource(app.onInputSourceChanged, app.getFailureFor('getInputSource'));
         };
         app.tvSession.getSupportedInputSources(onGetSupportedInputSources, app.getFailureFor('getSupportedInputSources'));
     },
@@ -266,6 +269,9 @@ var app = {
         app.tvSession.getChannelID(app.receiveChannelID, app.getFailureFor('getChannelID'));
     },
     receiveChannelID: function(args){
+        // Channel ID seems to come back in a format like 1_23_23_0_0_0_0 ...
+        // Where on limited tests 23 would be the channel number and 1 some indication of 
+        // the channel source (e.g. DTV cable or DTV antenna)
         var channelID = args[0];
         var channelRe = /(\d+)_(\d+)(.*)/;
         if (channelRe.test(channelID)) {
@@ -327,11 +333,6 @@ var app = {
     onChannelDownPressed: function() {
         if (app.tvSession) {
             app.tvSession.channelDown();
-        }
-    },
-    onTestPressed: function() {
-        if (app.tvSession) {
-            app.tvSession.getProperty('com.lg.Control.TV', 'ChannelID', app.getSuccessFor('channleid'), app.getFailureFor('ChannelID'));
         }
     },
     getSuccessFor: function(successType) {

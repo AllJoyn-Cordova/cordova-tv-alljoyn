@@ -53,7 +53,7 @@ body {
 }
 
 .controls {
-    display:block;
+    display:none;
     width:100%;
     text-align: center;
 }
