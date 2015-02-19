@@ -157,7 +157,7 @@ var app = {
 
         app.tvSession.setProperty = function(interfaceName, propertyName, propertyValues, successCallback, errorCallback) {
             var setPropertyIndexList = [2, 0, 1, 1];
-            app.tvSession.callMethod(successCallback, errorCallback, app.tvSession.sessionHost, null, setPropertyIndexList, 'ssv', [interfaceName, propertyName].concat(propertyValues), 'v');
+            app.tvSession.callMethod(successCallback, errorCallback, app.tvSession.sessionHost, null, setPropertyIndexList, 'ssv', [interfaceName, propertyName].concat(propertyValues), null);
         };
 
         app.tvSession.getProperty = function(interfaceName, propertyName, successCallback, errorCallback) {
@@ -233,7 +233,7 @@ var app = {
     resetInputControls: function() {
         var inputControls = document.getElementById('inputcontrols');
         inputControls.innerHTML = '';
-        var inputHeader =  document.createElement('h2');
+        var inputHeader = document.createElement('h2');
         inputHeader.textContent = "input";
         inputControls.appendChild(inputHeader);
     },
@@ -268,7 +268,7 @@ var app = {
         // So ask for channel id
         app.tvSession.getChannelID(app.receiveChannelID, app.getFailureFor('getChannelID'));
     },
-    receiveChannelID: function(args){
+    receiveChannelID: function(args) {
         // Channel ID seems to come back in a format like 1_23_23_0_0_0_0 ...
         // Where on limited tests 23 would be the channel number and 1 some indication of 
         // the channel source (e.g. DTV cable or DTV antenna)
