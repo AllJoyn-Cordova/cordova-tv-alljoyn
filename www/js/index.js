@@ -162,7 +162,13 @@ var app = {
 
         app.tvSession.getProperty = function(interfaceName, propertyName, successCallback, errorCallback) {
             var getPropertyIndexList = [2, 0, 1, 0];
-            app.tvSession.callMethod(successCallback, errorCallback, app.tvSession.sessionHost, null, getPropertyIndexList, 'ss', [interfaceName, propertyName], 'v');
+            var removeVariantSignatureSuccessCallback = function(args) {
+                // Remove the first argument which is the variant signature
+                // For this app we will assume the caller knows what is coming based on what property they are getting
+                args.shift();
+                successCallback(args);
+            };
+            app.tvSession.callMethod(removeVariantSignatureSuccessCallback, errorCallback, app.tvSession.sessionHost, null, getPropertyIndexList, 'ss', [interfaceName, propertyName], 'v');
         };
 
         app.tvSession.setMute = function(muted) {
