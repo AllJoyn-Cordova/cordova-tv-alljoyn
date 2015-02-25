@@ -83,6 +83,26 @@ body {
     width:available;
     background-color:yellow;
 }
+input {
+    height: 2em;
+}
+
+input[type=submit] {
+    border-radius: 5px;
+    border: 0;
+    width: 33%;
+    background: -webkit-linear-gradient(top, yellow 1%, yellow 100%);
+    background: -ms-linear-gradient(top, yellow 1%, yellow 100%);
+    padding: 0.7em;
+    height: 100%;
+}
+
+.notificationcontrols {
+    clear:both;
+    display:block;
+    width:100%;
+    text-align: center;
+}
 
 .selected {
     background-color:green;

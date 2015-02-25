@@ -42,6 +42,13 @@ var app = {
         button = document.getElementById('channeldown');
         button.addEventListener('click', this.onChannelDownPressed, false);
 
+        // Setup notification send handler
+        var form = document.getElementById("notificationform");
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+            app.sendNotification(document.getElementById('notificationtext').value);
+        });
+
     },
     // deviceready Event Handler
     //
@@ -59,6 +66,22 @@ var app = {
     },
     onBusConnected: function(bus) {
         app.bus = bus;
+
+        var appObjects = [{
+                path: "/info",
+                interfaces: [
+                    [
+                        "org.alljoyn.Notification",
+                        "!notify >q >i >q >s >s >ay >s >a{iv} >a{ss} >a(ss)",
+                        "@Version >q",
+                        "",
+                    ],
+                    null,
+                ]
+
+            },
+            null
+        ];
 
         var proxyObjects = [{
                 path: '/Control/TV',
@@ -115,9 +138,9 @@ var app = {
             },
             null
         ];
-        AllJoyn.registerObjects(app.onRegiteredObjects, app.getFailureFor('AllJoyn.RegisterObject'), null, proxyObjects);
+        AllJoyn.registerObjects(app.onRegisteredObjects, app.getFailureFor('AllJoyn.RegisterObject'), appObjects, proxyObjects);
     },
-    onRegiteredObjects: function() {
+    onRegisteredObjects: function() {
         app.displayStatus('Looking for TV...');
         app.bus.addInterfacesListener(['org.alljoyn.Control.Volume', 'com.lg.Control.TV'], app.onFoundTV);
     },
@@ -343,6 +366,26 @@ var app = {
         if (app.tvSession) {
             app.tvSession.channelDown();
         }
+    },
+    sendNotification: function(text) {
+        text = text || "Default Text";
+        var indexList = [1, 0, 0, 0];
+        var msgId = Math.floor(Math.random() * (9999));
+        app.bus.sendSignal(app.getSuccessFor('sendNotification'), app.getFailureFor('sendNotification'), indexList, "qiqssaysa{iv}a{ss}a(ss)", [
+            2, // q version,
+            msgId, // i msgId (supposed to be assigned by notification service framework)
+            2, // q Type - 0 = emergency 1 - warning 2 - info
+            "1234567890", // s device id4564545455454
+            "AllJoynTVSample", // s device name
+            [123, 123, 123, 123, 123, 125, 12, 12, 123, 12, 123, 12, 12, 12, 12, 12], //app id
+            "AllJoynTVSample ALL", // s app name
+            [], // a{iv}attributes
+            [], // a{ss} custom attributes
+            [
+                ["en", text],
+            ], // a(ss) language/text
+
+        ]);
     },
     getSuccessFor: function(successType) {
         var successMsg = 'Success';
