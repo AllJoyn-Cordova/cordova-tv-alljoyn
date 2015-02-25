@@ -122,7 +122,7 @@ var app = {
         app.bus.addInterfacesListener(['org.alljoyn.Control.Volume', 'com.lg.Control.TV'], app.onFoundTV);
     },
     onFoundTV: function(aboutAnnouncement) {
-        app.displayStatus('Found TV: ' + aboutAnnouncement.DeviceName[1] + ' @ ' + aboutAnnouncement.port);
+        app.displayStatus('Found TV: ' + aboutAnnouncement.properties.DeviceName[1] + ' @ ' + aboutAnnouncement.port);
         app.tvInfo = aboutAnnouncement;
         var service = {
             name: aboutAnnouncement.message.sender,
@@ -133,7 +133,7 @@ var app = {
     onJoinedTVSession: function(tvSession) {
         app.tvSession = tvSession;
         app.displayStatus('Joined TV Session: ' + tvSession.sessionId);
-        document.getElementById('connectedhdr').textContent = 'Connected To: ' + app.tvInfo.DeviceName[1];
+        document.getElementById('connectedhdr').textContent = 'Connected To: ' + app.tvInfo.properties.DeviceName[1];
 
         // Add some functions for clear code later on
         app.tvSession.channelUp = function() {
