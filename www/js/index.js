@@ -121,18 +121,19 @@ var app = {
         app.displayStatus('Looking for TV...');
         app.bus.addInterfacesListener(['org.alljoyn.Control.Volume', 'com.lg.Control.TV'], app.onFoundTV);
     },
-    onFoundTV: function(tvInfo) {
-        app.displayStatus('Found TV: ' + tvInfo.name + ' @ ' + tvInfo.port);
-        app.tvInfo = tvInfo;
+    onFoundTV: function(aboutAnnouncement) {
+        app.displayStatus('Found TV: ' + aboutAnnouncement.properties.DeviceName[1] + ' @ ' + aboutAnnouncement.port);
+        app.tvInfo = aboutAnnouncement;
         var service = {
-            name: tvInfo.name,
-            port: tvInfo.port
+            name: aboutAnnouncement.message.sender,
+            port: aboutAnnouncement.port,
         };
         app.bus.joinSession(app.onJoinedTVSession, app.getFailureFor('bus.joinSession'), service);
     },
     onJoinedTVSession: function(tvSession) {
         app.tvSession = tvSession;
         app.displayStatus('Joined TV Session: ' + tvSession.sessionId);
+        document.getElementById('connectedhdr').textContent = 'Connected To: ' + app.tvInfo.properties.DeviceName[1];
 
         // Add some functions for clear code later on
         app.tvSession.channelUp = function() {
@@ -162,11 +163,11 @@ var app = {
 
         app.tvSession.getProperty = function(interfaceName, propertyName, successCallback, errorCallback) {
             var getPropertyIndexList = [2, 0, 1, 0];
-            var removeVariantSignatureSuccessCallback = function(args) {
+            var removeVariantSignatureSuccessCallback = function(message) {
                 // Remove the first argument which is the variant signature
                 // For this app we will assume the caller knows what is coming based on what property they are getting
-                args.shift();
-                successCallback(args);
+                message.arguments.shift();
+                successCallback(message);
             };
             app.tvSession.callMethod(removeVariantSignatureSuccessCallback, errorCallback, app.tvSession.sessionHost, null, getPropertyIndexList, 'ss', [interfaceName, propertyName], 'v');
         };
@@ -219,7 +220,8 @@ var app = {
         var controls = document.querySelector('.controls');
         controls.setAttribute('style', 'display:block;');
 
-        var onGetSupportedInputSources = function(args) {
+        var onGetSupportedInputSources = function(message) {
+            var args = message.arguments;
             app.inputSources = [];
             var inputSources = args[0];
             app.resetInputControls();
@@ -269,15 +271,17 @@ var app = {
             inputControl.className = 'control selected';
         }
     },
-    onChannelNumberChanged: function(args) {
+    onChannelNumberChanged: function(message) {
+        var args = message.arguments;
         //Unfortunately this doesn't give us meaningful data
         // So ask for channel id
         app.tvSession.getChannelID(app.receiveChannelID, app.getFailureFor('getChannelID'));
     },
-    receiveChannelID: function(args) {
+    receiveChannelID: function(message) {
         // Channel ID seems to come back in a format like 1_23_23_0_0_0_0 ...
         // Where on limited tests 23 would be the channel number and 1 some indication of 
         // the channel source (e.g. DTV cable or DTV antenna)
+        var args = message.arguments;
         var channelID = args[0];
         var channelRe = /(\d+)_(\d+)(.*)/;
         if (channelRe.test(channelID)) {
@@ -291,7 +295,8 @@ var app = {
         var volumeStatus = document.getElementById('volumestatus');
         volumeStatus.textContent = volumeStatusContent;
     },
-    onMuteChanged: function(mutedArgs) {
+    onMuteChanged: function(message) {
+        var mutedArgs = message.arguments;
         var muted = false;
         if (mutedArgs) {
             muted = mutedArgs[0];
@@ -300,20 +305,18 @@ var app = {
         if (muted) {
             app.setVolumeStatus('Muted');
         } else {
-            app.tvSession.getVolume(function(args) {
-                app.onVolumeChanged(args[0]);
-            }, app.getFailureFor('getVolume'));
+            app.tvSession.getVolume(app.onVolumeChanged, app.getFailureFor('getVolume'));
         }
     },
-    onVolumeChanged: function(volume) {
-        app.displayStatus('VolumeChanged: ' + volume);
-        app.setVolumeStatus('Vol: ' + volume);
+    onVolumeChanged: function(message) {
+        app.displayStatus('VolumeChanged: ' + message.arguments);
+        app.setVolumeStatus('Vol: ' + message.arguments);
     },
-    onInputSourceChanged: function(inputSource) {
-        app.displayStatus('InputSourceChanged: ' + inputSource);
+    onInputSourceChanged: function(message) {
+        app.displayStatus('InputSourceChanged: ' + message.arguments);
         if (app.inputSources) {
-            app.updateSelectedInput(inputSource);
-            app.displayStatus('InputSourceChanged: ' + app.inputSources[inputSource]);
+            app.updateSelectedInput(message.arguments);
+            app.displayStatus('InputSourceChanged: ' + app.inputSources[message.arguments]);
         }
     },
     onVolumeDownPressed: function() {
